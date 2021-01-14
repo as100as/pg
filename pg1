@@ -1,0 +1,177 @@
+Pg1 FindS algorithm
+import csv
+with open("enjoysport.csv") as file:
+ csvfile= csv.reader(file)
+ dataset=[]
+ print('The Given Training Data Set\n')
+ for i in csvfile:
+ dataset.append(i)
+ print(i)
+attributes=len(dataset[0])-1
+hypothesis=['0' for _ in range(attributes)]
+print('\nThe Initial value of hypothesis:\n',hypothesis)
+print('\n\nFind S: Finding a Maximally Specific Hypothesis\n')
+h=0
+for data in dataset[1:]:
+ if data[6]=='yes':
+ if hypothesis[0]=='0':
+ hypothesis=data[:attributes]
+ for i in range(attributes):
+ if hypothesis[i]!=data[i]:
+ hypothesis[i]='?'
+ print('For Training Instance No: {} the hypothesis is {}'.format(h,hypothesis))
+ h+=1
+print('\n\nThe Maximally Specific Hypothesis for a given Training Examples :\n',hypothesis)
+
+
+PG2: Candidate elimination
+import numpy as np
+import pandas as pd
+data = pd.DataFrame(data=pd.read_csv('enjoysport.csv'))
+concepts = np.array(data.iloc[:,0:-1])
+print(concepts)
+target = np.array(data.iloc[:,-1])
+print(target)
+def learn(concepts, target):
+ specific_h = concepts[0].copy()
+ print("initialization of specific_h and general_h")
+ print(specific_h)
+ general_h = [["?" for i in range(len(specific_h))] for i in range(len(specific_h))]
+ print(general_h)
+ for i, h in enumerate(concepts):
+ if target[i] == "yes":
+ for x in range(len(specific_h)):
+ if h[x]!= specific_h[x]:
+ specific_h[x] ='?'
+ general_h[x][x] ='?'
+ print(specific_h)
+ print(specific_h)
+ if target[i] == "no":
+ for x in range(len(specific_h)):
+ if h[x]!= specific_h[x]:
+ general_h[x][x] = specific_h[x]
+ else:
+ general_h[x][x] = '?'
+ print(" steps of Candidate Elimination Algorithm",i+1)
+ print(specific_h)
+ print(general_h)
+ indices = [i for i, val in enumerate(general_h) if val == ['?', '?', '?', '?', '?', '?']]
+ for i in indices:
+ general_h.remove(['?', '?', '?', '?', '?', '?'])
+ return specific_h, general_h
+s_final, g_final = learn(concepts, target)
+print("Final Specific_h:", s_final, sep="\n")
+print("Final General_h:", g_final, sep="\n")
+
+
+PG5: Nave baysian classifier
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn import metrics
+df = pd.read_csv("pima_indian.csv")
+feature_col_names = ['num_preg', 'glucose_conc', 'diastolic_bp', 'thickness', 'insulin', 'bmi',
+'diab_pred', 'age']
+predicted_class_names = ['diabetes']
+X = df[feature_col_names].values
+y = df[predicted_class_names].values
+xtrain,xtest,ytrain,ytest=train_test_split(X,y,test_size=0.33)
+print ('\n the total number of Training Data :',ytrain.shape)
+print ('\n the total number of Test Data :',ytest.shape)
+clf = GaussianNB().fit(xtrain,ytrain.ravel())
+predicted = clf.predict(xtest)
+predictTestData= clf.predict([[6,148,72,35,0,33.6,0.627,50]])
+print('\n Confusion matrix')
+print(metrics.confusion_matrix(ytest,predicted))
+print('\n Accuracy of the classifier is',metrics.accuracy_score(ytest,predicted))
+print('\n The value of Precision', metrics.precision_score(ytest,predicted))
+print('\n The value of Recall', metrics.recall_score(ytest,predicted))
+print("Predicted Value for individual Test Data:", predictTestData)
+
+
+Program 7 : Baysian Network
+import numpy as np
+import pandas as pd 
+import csv
+from pgmpy.estimators import MaximumLikelihoodEstimator
+from pgmpy.models import BayesianModel
+from pgmpy.inference import VariableElimination
+lines = list(csv.reader(open('data7_names.csv', 'r')))
+attributes = lines[0]
+heartDisease = pd.read_csv('data7_heart.csv', names = attributes)
+heartDisease = heartDisease.replace('?', np.nan)
+model = BayesianModel([('age', 'trestbps'), ('age', 'fbs'), ('sex', 'trestbps'), ('sex', 'trestbps'),
+ ('exang', 'trestbps'),('trestbps','heartdisease'),('fbs','heartdisease'),
+ ('heartdisease','restecg'),('heartdisease','thalach'),('heartdisease','chol')])
+print('\nLearning CPDs using Maximum Likelihood Estimators...');
+model.fit(heartDisease, estimator=MaximumLikelihoodEstimator)
+print('\nInferencing with Bayesian Network:')
+HeartDisease_infer = VariableElimination(model)
+print('\n1.Probability of HeartDisease given Age=20')
+q = HeartDisease_infer.query(variables=['heartdisease'], evidence={'age': 28})
+print(q['heartdisease'])
+print('\n2. Probability of HeartDisease given chol (Cholestoral) =100')
+q = HeartDisease_infer.query(variables=['heartdisease'], evidence={'chol': 100})
+print(q['heartdisease'])
+
+
+Program 8: K-means algorithm
+import matplotlib.pyplot as plt
+from sklearn import datasets
+from sklearn.cluster import KMeans
+import pandas as pd
+import numpy as np
+iris = datasets.load_iris()
+X = pd.DataFrame(iris.data)
+X.columns = ['Sepal_Length','Sepal_Width','Petal_Length','Petal_Width']
+y = pd.DataFrame(iris.target)
+y.columns = ['Targets']
+model = KMeans(n_clusters=3)
+model.fit(X)
+plt.figure(figsize=(14,14))
+colormap = np.array(['red', 'lime', 'black'])
+plt.subplot(2, 2, 1)
+plt.scatter(X.Petal_Length, X.Petal_Width, c=colormap[y.Targets], s=40)
+plt.title('Real Clusters')
+plt.xlabel('Petal Length')
+plt.ylabel('Petal Width')
+plt.subplot(2, 2, 2)
+plt.scatter(X.Petal_Length, X.Petal_Width, c=colormap[model.labels_], s=40)
+plt.title('K-Means Clustering')
+plt.xlabel('Petal Length')
+plt.ylabel('Petal Width')
+from sklearn import preprocessing
+scaler = preprocessing.StandardScaler()
+scaler.fit(X)
+xsa = scaler.transform(X)
+xs = pd.DataFrame(xsa, columns = X.columns)
+from sklearn.mixture import GaussianMixture 
+gmm = GaussianMixture(n_components=3)
+gmm.fit(xs)
+gmm_y = gmm.predict(xs)
+plt.subplot(2, 2, 3)
+plt.scatter(X.Petal_Length, X.Petal_Width, c=colormap[gmm_y], s=40)
+plt.title('GMM Clustering')
+plt.xlabel('Petal Length')
+plt.ylabel('Petal Width')
+
+
+Program 9: k-nearest neighbour algorithm
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import datasets
+iris=datasets.load_iris()
+print("Iris Data set loaded...")
+x_train, x_test, y_train, y_test = train_test_split(iris.data,iris.target,test_size=0.3)
+print("Dataset is split into training and testing samples...")
+print("Size of trainng data and its label",x_train.shape,y_train.shape)
+print("Size of trainng data and its label",x_test.shape, y_test.shape)
+for i in range(len(iris.target_names)):
+ print("Label", i , "-",str(iris.target_names[i]))
+classifier = KNeighborsClassifier(n_neighbors=1)
+classifier.fit(x_train, y_train)
+y_pred=classifier.predict(x_test)
+print("Results of Classification using K-nn with K=1 ")
+for r in range(0,len(x_test)):
+ print(" Sample:", str(x_test[r]), " Actual-label:", str(y_test[r]), " Predicted-label:", str(y_pred[r]))
+print("Classification Accuracy :" , classifier.score(x_test,y_test)*100);
